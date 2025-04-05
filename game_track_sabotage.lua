@@ -24,6 +24,7 @@ local PLAYERS = {}
 local LOG = {}
 local FF_COUNT = {}
 local ECO_DEFS = {}
+local BUILDER_DEFS = {}
 local MY_TEAM = Spring.GetMyTeamID()
 local GAME_DATE
 
@@ -40,6 +41,10 @@ for unit_def_id, unit_def in pairs(UnitDefs) do
     then
         ECO_DEFS[unit_def_id] = unit_def
     end
+
+    if unit_def.isBuilder then
+        BUILDER_DEFS[unit_def_id] = unit_def
+    end
 end
 
 local LAST_FRAME = -DEBOUNCE
@@ -49,6 +54,8 @@ function widget:UnitDestroyed(unit_id, unit_def_id, unit_team, attacker_id, atta
         and attacker_team ~= MY_TEAM
         and AreTeamsAllied(unit_team, attacker_team)
         and ECO_DEFS[unit_def_id]
+        -- ignore builders since it could be reclaim
+        and not BUILDER_DEFS[attacker_def_id]
     then
         local attacker_players = GetPlayerList(attacker_team)
         if #attacker_players == 0 then
