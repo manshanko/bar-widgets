@@ -11,10 +11,10 @@ end
 
 local CONFIG = {
     -- number of game frames between updates (1 second is 30 frames)
-    update_rate = 15,
+    update_rate = 5,
 
-    -- number of updates to average resource spent over (8 * 15 frames is 4 seconds)
-    average_range = 8,
+    -- number of updates to average resource spent over (24 * 5 frames is 4 seconds)
+    average_range = 24,
 
     font_file = "fonts/" .. Spring.GetConfigString("bar_font2", "Exo2-SemiBold.otf"),
 }
