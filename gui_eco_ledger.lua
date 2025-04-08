@@ -17,7 +17,7 @@ local CONFIG = {
 }
 
 local echo = Spring.Echo
-local GetUnitHealth = Spring.GetUnitHealth
+local GetUnitIsBeingBuilt = Spring.GetUnitIsBeingBuilt
 local GetTeamRulesParam = Spring.GetTeamRulesParam
 local ValidUnitID = Spring.ValidUnitID
 local GetMouseState = Spring.GetMouseState
@@ -132,13 +132,15 @@ function widget:GameFrame()
     end
 
     for unit_id, info in pairs(IN_PROGRESS_ECO) do
-        local _, _, _, _, build_progress = GetUnitHealth(unit_id)
-        if build_progress ~= nil then
+        local being_built, build_progress = GetUnitIsBeingBuilt(unit_id)
+        if being_built then
             local delta = build_progress - info.progress
             info.progress = build_progress
 
             ECO_METAL = ECO_METAL + delta * info.metal_cost
             ECO_ENERGY = ECO_ENERGY + delta * info.energy_cost
+        else
+            IN_PROGRESS_ECO[unit_id] = nil
         end
     end
     FRAME_COUNT = FRAME_COUNT + 1
