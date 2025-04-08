@@ -177,19 +177,22 @@ function widget:GameFrame()
     end
 end
 
-local TIME = 0
+local LAST_METAL = 0
+local LAST_ENERGY = 0
 local DEBOUNCE = false
-function widget:Update(dt)
+function widget:Update()
     if not GAME_STARTED then
         return
     end
 
-    if TIME < 1 and (DEBOUNCE or not UPDATE_GUI) then
-        TIME = TIME + dt
+    if (LAST_METAL == TICK_ECO_METAL and LAST_ENERGY == TICK_ECO_ENERGY)
+        and (DEBOUNCE or not UPDATE_GUI)
+    then
         return
     end
 
-    TIME = 0
+    LAST_METAL = TICK_ECO_METAL
+    LAST_ENERGY = TICK_ECO_ENERGY
     DEBOUNCE = UPDATE_GUI
     if UPDATE_GUI then
         UPDATE_GUI = false
