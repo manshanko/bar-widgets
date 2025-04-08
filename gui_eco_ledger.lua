@@ -13,6 +13,9 @@ local CONFIG = {
     -- number of game frames between updates (1 second is 30 frames)
     update_rate = 15,
 
+    -- number of updates to average resource spent over (8 * 15 frames is 4 seconds)
+    average_range = 8,
+
     font_file = "fonts/" .. Spring.GetConfigString("bar_font2", "Exo2-SemiBold.otf"),
 }
 
@@ -38,6 +41,8 @@ local GAME_STARTED = false
 local FRAME_COUNT = 0
 local ECO_METAL = 0
 local ECO_ENERGY = 0
+local ECO_RANGE = {}
+local ECO_INDEX = 1
 local TICK_ECO_METAL = 0
 local TICK_ECO_ENERGY = 0
 local UPDATE_GUI = false
@@ -160,8 +165,20 @@ function widget:GameFrame()
     FRAME_COUNT = FRAME_COUNT + 1
 
     if FRAME_COUNT > CONFIG.update_rate then
-        TICK_ECO_METAL = 30 * ECO_METAL / FRAME_COUNT
-        TICK_ECO_ENERGY = 30 * ECO_ENERGY / FRAME_COUNT
+        if ECO_INDEX > CONFIG.average_range then
+            ECO_INDEX = 1
+        end
+        ECO_RANGE[ECO_INDEX] = { ECO_METAL, ECO_ENERGY }
+        ECO_INDEX = ECO_INDEX + 1
+
+        TICK_ECO_METAL = 0
+        TICK_ECO_ENERGY = 0
+        for i=1, #ECO_RANGE do
+            TICK_ECO_METAL = TICK_ECO_METAL + ECO_RANGE[i][1]
+            TICK_ECO_ENERGY = TICK_ECO_ENERGY + ECO_RANGE[i][2]
+        end
+        TICK_ECO_METAL = TICK_ECO_METAL * 30 / FRAME_COUNT / #ECO_RANGE
+        TICK_ECO_ENERGY = TICK_ECO_ENERGY * 30 / FRAME_COUNT / #ECO_RANGE
         ECO_METAL = 0
         ECO_ENERGY = 0
         FRAME_COUNT = 0
