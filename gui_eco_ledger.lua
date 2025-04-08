@@ -28,7 +28,6 @@ local fuiRectRound, fuiElement
 local fui_ELEMENT_MARGIN
 local FONT, WIDTH, HEIGHT
 local DLIST_GUI
-local FORMAT_OPTIONS = { showSign = true }
 
 local MY_TEAM = Spring.GetLocalTeamID()
 local ECO_DEFS = {}
@@ -78,6 +77,21 @@ local function updateGui()
 
     local font_size = (AREA[4] - AREA[2]) * 0.3
 
+    -- special case values lower than 1.0 to avoid formatSI prefixes (millisecond, nanosecond, etc)
+    local metal = TICK_ECO_METAL
+    if metal > 0 and metal < 1 then
+        metal = string.format("-%.2f", metal)
+    else
+        metal = string.formatSI(-metal)
+    end
+
+    local energy = TICK_ECO_ENERGY
+    if energy > 0 and energy < 1 then
+        energy = string.format("-%.2f", energy)
+    else
+        energy = string.formatSI(-energy)
+    end
+
     if DLIST_GUI then
         gl.DeleteList(DLIST_GUI)
     end
@@ -88,7 +102,7 @@ local function updateGui()
 
         -- metal used
         FONT:SetTextColor(1, 1, 1, 1)
-        FONT:Print(string.formatSI(-TICK_ECO_METAL, FORMAT_OPTIONS),
+        FONT:Print(metal,
             AREA[3] - (font_size * 0.5),
             AREA[2] + 2.8 * ((AREA[4] - AREA[2]) / 4) - (font_size / 5),
             font_size,
@@ -96,7 +110,7 @@ local function updateGui()
 
         -- energy used
         FONT:SetTextColor(1, 1, 0, 1)
-        FONT:Print(string.formatSI(-TICK_ECO_ENERGY, FORMAT_OPTIONS),
+        FONT:Print(energy,
             AREA[3] - (font_size * 0.5),
             AREA[2] + 1.2 * ((AREA[4] - AREA[2]) / 4) - (font_size / 5),
             font_size,
