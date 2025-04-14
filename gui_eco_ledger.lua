@@ -29,7 +29,7 @@ local UnitDefs = UnitDefs
 
 local fuiRectRound, fuiElement
 local fui_ELEMENT_MARGIN
-local FONT, WIDTH, HEIGHT
+local FONT
 local DLIST_GUI
 
 local MY_TEAM = Spring.GetLocalTeamID()
@@ -218,19 +218,6 @@ function widget:Update()
     updateGui()
 end
 
-function widget:ViewResize(width, height)
-    WIDTH = width
-    HEIGHT = height
-
-    if not fuiRectRound then
-        fuiRectRound = WG["FlowUI"].Draw.RectRound
-        fuiElement = WG["FlowUI"].Draw.Element
-        fui_ELEMENT_MARGIN = WG["FlowUI"].elementMargin
-
-        FONT = WG["fonts"].getFont(CONFIG.font_file)
-    end
-end
-
 function widget:DrawScreen()
     if DLIST_GUI then
         gl.CallList(DLIST_GUI)
@@ -247,8 +234,11 @@ function widget:MousePress(x, y, _button)
 end
 
 function widget:Initialize()
-    local width, height = gl.GetViewSizes()
-    widget:ViewResize(width, height)
+    fuiRectRound = WG["FlowUI"].Draw.RectRound
+    fuiElement = WG["FlowUI"].Draw.Element
+    fui_ELEMENT_MARGIN = WG["FlowUI"].elementMargin
+
+    FONT = WG["fonts"].getFont(CONFIG.font_file)
 end
 
 function widget:Shutdown()
