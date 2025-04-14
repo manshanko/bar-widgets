@@ -121,13 +121,13 @@ end
 local function handleReclaimSelected()
     local unit_ids = GetSelectedUnits()
 
-    if SHUFFLE_MODIFIER then
-        signalReclaimShuffle(unit_ids)
-    else
-        for _, unit_id in ipairs(unit_ids) do
-            signalReclaim(unit_id)
-        end
+    for _, unit_id in ipairs(unit_ids) do
+        signalReclaim(unit_id)
     end
+end
+
+local function handleReclaimSelectedShuffle()
+    signalReclaimShuffle(GetSelectedUnits())
 end
 
 function widget:CommandsChanged()
@@ -140,7 +140,11 @@ end
 
 function widget:CommandNotify(cmd_id, cmd_params, cmd_options)
     if cmd_id == CMD_RECLAIM_SELECTED then
-        handleReclaimSelected()
+        if SHUFFLE_MODIFIER then
+            handleReclaimSelectedShuffle()
+        else
+            handleReclaimSelected()
+        end
     end
 end
 
@@ -158,8 +162,10 @@ end
 
 function widget:Initialize()
     widgetHandler.actionHandler:AddAction(self, "reclaim_selected", handleReclaimSelected, nil, "p")
+    widgetHandler.actionHandler:AddAction(self, "reclaim_selected_shuffle", handleReclaimSelectedShuffle, nil, "p")
 end
 
 function widget:Shutdown()
     widgetHandler.actionHandler:RemoveAction(self, "reclaim_selected", "p")
+    widgetHandler.actionHandler:RemoveAction(self, "reclaim_selected_shuffle", "p")
 end
