@@ -10,6 +10,12 @@ function widget:GetInfo()
     }
 end
 
+local CONFIG = {
+    -- shuffle reclaim selected orders when shuffle key is held
+    -- default keybind is space (32)
+    shuffle_key = 32,
+}
+
 local echo = Spring.Echo
 local i18n = Spring.I18N
 local GetSelectedUnits = Spring.GetSelectedUnits
@@ -33,9 +39,6 @@ local CMD_RECLAIM_SELECTED_DESCRIPTION = {
     action = "reclaim_selected",
 }
 
-local ALT = {"alt"}
-local CMD_CACHE = { 0, CMD_RECLAIM, CMD_OPT_SHIFT, 0 }
-
 i18n.set("en.ui.orderMenu." .. CMD_RECLAIM_SELECTED_DESCRIPTION.action, "Reclaim Selected")
 i18n.set("en.ui.orderMenu." .. CMD_RECLAIM_SELECTED_DESCRIPTION.action .. "_tooltip", "Reclaim selected units")
 
@@ -51,9 +54,11 @@ for unit_def_id, unit_def in pairs(UnitDefs) do
     end
 end
 
-local function signalReclaim(target_unit_id)
-    CMD_CACHE[4] = target_unit_id
+local ALT = {"alt"}
+local CMD_CACHE = { 0, CMD_RECLAIM, CMD_OPT_SHIFT, 0 }
+local SHUFFLE_MODIFIER = false
 
+local function ntNearUnit(target_unit_id)
     local pos = {GetUnitPosition(target_unit_id)}
     local units_near = GetUnitsInCylinder(pos[1], pos[3], MAX_DISTANCE, -3)
     local unit_ids = {}
@@ -66,14 +71,62 @@ local function signalReclaim(target_unit_id)
         end
     end
 
+    return unit_ids
+end
+
+local function signalReclaim(target_unit_id)
+    local unit_ids = ntNearUnit(target_unit_id)
+
+    CMD_CACHE[4] = target_unit_id
     GiveOrderToUnitArray(unit_ids, CMD_INSERT, CMD_CACHE, ALT)
+end
+
+local function signalReclaimShuffle(target_unit_ids)
+    local tasks = {}
+    for i=1, #target_unit_ids do
+        local unit_ids = ntNearUnit(target_unit_ids[i])
+        table.shuffle(unit_ids)
+        tasks[i] = {
+            num_units = #unit_ids,
+            unit_ids = unit_ids,
+            target_unit_id = target_unit_ids[i],
+        }
+    end
+
+    local num_tasks = #tasks
+    local split = num_tasks
+    while num_tasks > 0 do
+        for i, group in pairs(tasks) do
+            local grp_unit_ids = group.unit_ids
+            local num_units = group.num_units
+            local take = math.ceil(math.min(math.max(4, num_units / split), num_units))
+            group.num_units = group.num_units - take
+
+            local unit_ids = {}
+            for i=1, take do
+                unit_ids[i] = grp_unit_ids[num_units - i]
+            end
+
+            if group.num_units == 0 then
+                tasks[i] = nil
+                num_tasks = num_tasks - 1
+            end
+
+            CMD_CACHE[4] = group.target_unit_id
+            GiveOrderToUnitArray(unit_ids, CMD_INSERT, CMD_CACHE, ALT)
+        end
+    end
 end
 
 local function handleReclaimSelected()
     local unit_ids = GetSelectedUnits()
 
-    for _, unit_id in ipairs(unit_ids) do
-        signalReclaim(unit_id)
+    if SHUFFLE_MODIFIER then
+        signalReclaimShuffle(unit_ids)
+    else
+        for _, unit_id in ipairs(unit_ids) do
+            signalReclaim(unit_id)
+        end
     end
 end
 
@@ -88,6 +141,18 @@ end
 function widget:CommandNotify(cmd_id, cmd_params, cmd_options)
     if cmd_id == CMD_RECLAIM_SELECTED then
         handleReclaimSelected()
+    end
+end
+
+function widget:KeyPress(key, mod, is_repeat)
+    if key == CONFIG.shuffle_key and not is_repeat then
+        SHUFFLE_MODIFIER = true
+    end
+end
+
+function widget:KeyRelease(key)
+    if key == CONFIG.shuffle_key then
+        SHUFFLE_MODIFIER = false
     end
 end
 
