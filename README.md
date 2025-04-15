@@ -24,5 +24,14 @@ Shows metal/energy going into economy buildings on the top bar.
 ### Reclaim Selected
 
 Adds button to queue selected units for reclaim with nearby nano turrets.
-Reclaim commands are inserted first into nano turret command queues.
-Compared to area reclaiming buildings, this widget does not order nano turrets to reclaim targets outside their range.
+
+Does not tell nano turrets to reclaim targets outside their range unlike area reclaim.
+
+Reclaims are inserted first in nano turret order queues.
+
+Supports shuffling reclaims to work around nano turret retarget delay.
+Will shuffle if holding space when using UI button.
+
+Keybinds:
+* `reclaim_selected`
+* `reclaim_selected_shuffle`
