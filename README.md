@@ -2,6 +2,8 @@ Collection of widgets for [BAR (Beyond All Reason)](https://www.beyondallreason.
 
 Widgets are placed in `LuaUI/Widgets`. See **Open Install Directory** in the launcher for BAR's install directory.
 
+See [resopmok's keybind guide](https://github.com/resopmok/BAR_uikeys_collections/blob/main/keybind-guide.md) for changing keybinds.
+
 Widgets:
 * [Track Sabotage](#track-sabotage) ([`game_track_sabotage.lua`](https://raw.githubusercontent.com/manshanko/bar-widgets/main/game_track_sabotage.lua))
 * [Eco Ledger](#eco-ledger) ([`gui_eco_ledger.lua`](https://raw.githubusercontent.com/manshanko/bar-widgets/main/gui_eco_ledger.lua))
