@@ -11,9 +11,8 @@ function widget:GetInfo()
 end
 
 local CONFIG = {
-    -- shuffle reclaim selected orders when shuffle key is held
-    -- default keybind is space (32)
-    shuffle_key = 32,
+    -- change default action on button press to shuffle
+    shuffle = true,
 }
 
 local echo = Spring.Echo
@@ -56,7 +55,6 @@ end
 
 local ALT = {"alt"}
 local CMD_CACHE = { 0, CMD_RECLAIM, CMD_OPT_SHIFT, 0 }
-local SHUFFLE_MODIFIER = false
 
 local function ntNearUnit(target_unit_id)
     local pos = {GetUnitPosition(target_unit_id)}
@@ -140,23 +138,11 @@ end
 
 function widget:CommandNotify(cmd_id, cmd_params, cmd_options)
     if cmd_id == CMD_RECLAIM_SELECTED then
-        if SHUFFLE_MODIFIER then
+        if CONFIG.shuffle then
             handleReclaimSelectedShuffle()
         else
             handleReclaimSelected()
         end
-    end
-end
-
-function widget:KeyPress(key, mod, is_repeat)
-    if key == CONFIG.shuffle_key and not is_repeat then
-        SHUFFLE_MODIFIER = true
-    end
-end
-
-function widget:KeyRelease(key)
-    if key == CONFIG.shuffle_key then
-        SHUFFLE_MODIFIER = false
     end
 end
 
