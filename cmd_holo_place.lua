@@ -87,12 +87,7 @@ local function handleHoloPlace()
             has_qbuilder = true
         elseif BUILDER_DEFS[def_id] then
             has_builder = true
-            HOLO_PLACERS[unit_id] = {
-                target_id = nil,
-                progress = nil,
-                build_time = nil,
-                build_speed = BUILDER_DEFS[def_id] * 1.05,
-            }
+            HOLO_PLACERS[unit_id] = false
         end
     end
 
@@ -151,8 +146,8 @@ end
 
 -- estimate if being assisted by checking build progress
 function widget:GameFrame()
-    for unit_id, info in pairs(HOLO_PLACERS) do
-        if not info.target_id then
+    for unit_id, target_id in pairs(HOLO_PLACERS) do
+        if not target_id then
             local target_id = GetUnitIsBuilding(unit_id)
             if target_id then
                 local being_built, progress = GetUnitIsBeingBuilt(target_id)
@@ -174,24 +169,29 @@ function widget:GameFrame()
                     end
 
                     if not nt_near then
-                        info.target_id = target_id
-                        info.step = info.build_speed / BT_DEFS[GetUnitDefID(target_id)] / 30
-                        info.progress = progress --+ info.step
+                        HOLO_PLACERS[unit_id] = target_id
                     end
                 end
             end
         else
-            local being_built, progress = GetUnitIsBeingBuilt(info.target_id)
+            local being_built, progress = GetUnitIsBeingBuilt(target_id)
             if being_built then
-                if progress > info.progress + info.step then
-                    info.target_id = nil
-                    local _, _, tag = GetUnitCurrentCommand(unit_id)
-                    GiveOrderToUnit(unit_id, CMD_REMOVE, tag, 0)
-                else
-                    info.progress = progress
+                local nt_ids = ntNearUnit(target_id)
+                for i=1, #nt_ids do
+                    local nt_id = nt_ids[i]
+                    local cmds = GetUnitCommands(nt_id, 2)
+                    if (cmds[2] and cmds[2].id == CMD_FIGHT)
+                        or (cmds[1] and cmds[1].id == CMD_FIGHT)
+                    then
+                        HOLO_PLACERS[unit_id] = false
+                        local _, _, tag = GetUnitCurrentCommand(unit_id)
+                        GiveOrderToUnit(unit_id, CMD_REMOVE, tag, 0)
+                        GiveOrderToUnit(nt_id, CMD_REPAIR, target_id, 0)
+                        break
+                    end
                 end
             else
-                info.target_id = nil
+                HOLO_PLACERS[unit_id] = false
             end
         end
     end
