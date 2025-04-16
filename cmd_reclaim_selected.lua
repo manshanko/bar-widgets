@@ -102,7 +102,7 @@ local function signalReclaimShuffle(target_unit_ids)
 
             local unit_ids = {}
             for i=1, take do
-                unit_ids[i] = grp_unit_ids[num_units - i]
+                unit_ids[i] = grp_unit_ids[num_units - i + 1]
             end
 
             if group.num_units == 0 then
