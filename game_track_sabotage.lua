@@ -50,7 +50,8 @@ end
 
 local LAST_FRAME = -DEBOUNCE
 function widget:UnitDestroyed(unit_id, unit_def_id, unit_team, attacker_id, attacker_def_id, attacker_team)
-    if attacker_team >= 0
+    if attacker_team
+        and attacker_team >= 0
         and unit_team ~= attacker_team
         and attacker_team ~= MY_TEAM
         and AreTeamsAllied(unit_team, attacker_team)
