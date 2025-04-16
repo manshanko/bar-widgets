@@ -33,8 +33,8 @@ Does not tell nano turrets to reclaim targets outside their range.
 Reclaim orders are shuffled to work around nano turret retarget delay.
 
 Keybinds:
-* `reclaim_selected` - orders to reclaim targets one at a time (mostly)
-* `reclaim_selected_shuffle` -- shuffles orders to avoid retarget delay
+* `reclaim_selected` - orders selected units to reclaim targets one at a time
+* `reclaim_selected_shuffle` -- same as above but shuffles orders to avoid retarget delay
 
 
 
