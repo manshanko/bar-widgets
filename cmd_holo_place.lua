@@ -152,23 +152,27 @@ function widget:GameFrame()
             if target_id then
                 local being_built, progress = GetUnitIsBeingBuilt(target_id)
                 if being_built then
-                    local nt_ids = ntNearUnit(target_id)
-                    local nt_near = false
-                    for i=1, #nt_ids do
-                        local nt_id = nt_ids[i]
-                        local cmds = GetUnitCommands(nt_id, 2)
-                        if (cmds[2] and cmds[2].id == CMD_FIGHT)
-                            or (cmds[1] and cmds[1].id == CMD_FIGHT)
-                        then
-                            local _, _, tag = GetUnitCurrentCommand(unit_id)
-                            GiveOrderToUnit(unit_id, CMD_REMOVE, tag, 0)
-                            GiveOrderToUnit(nt_id, CMD_REPAIR, target_id, 0)
-                            nt_near = true
-                            break
+                    if progress > 0 then
+                        local nt_ids = ntNearUnit(target_id)
+                        local nt_near = false
+                        for i=1, #nt_ids do
+                            local nt_id = nt_ids[i]
+                            local cmds = GetUnitCommands(nt_id, 2)
+                            if (cmds[2] and cmds[2].id == CMD_FIGHT)
+                                or (cmds[1] and cmds[1].id == CMD_FIGHT)
+                            then
+                                local _, _, tag = GetUnitCurrentCommand(unit_id)
+                                GiveOrderToUnit(unit_id, CMD_REMOVE, tag, 0)
+                                GiveOrderToUnit(nt_id, CMD_REPAIR, target_id, 0)
+                                nt_near = true
+                                break
+                            end
                         end
-                    end
 
-                    if not nt_near then
+                        if not nt_near then
+                            HOLO_PLACERS[unit_id] = target_id
+                        end
+                    else
                         HOLO_PLACERS[unit_id] = target_id
                     end
                 end
