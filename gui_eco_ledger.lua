@@ -229,6 +229,10 @@ function widget:DrawScreen()
     end
 end
 
+function widget:ViewResize()
+    FONT = WG["fonts"].getFont(CONFIG.font_file)
+end
+
 function widget:MousePress(x, y, _button)
     return math.isInRect(x, y, AREA[1], AREA[2], AREA[3], AREA[4])
 end
@@ -238,7 +242,7 @@ function widget:Initialize()
     fuiElement = WG["FlowUI"].Draw.Element
     fui_ELEMENT_MARGIN = WG["FlowUI"].elementMargin
 
-    FONT = WG["fonts"].getFont(CONFIG.font_file)
+    widget:ViewResize()
 end
 
 function widget:Shutdown()
