@@ -76,46 +76,42 @@ local function ntNearUnit(target_unit_id)
     return unit_ids
 end
 
-local function handleHoloPlace()
-    local ids = GetSelectedUnits()
-    local has_qbuilder = false
-    local has_builder = false
-    for i=1, #ids do
-        local unit_id = ids[i]
-        local def_id = GetUnitDefID(unit_id)
-        if HOLO_PLACERS[unit_id] then
-            has_qbuilder = true
-        elseif BUILDER_DEFS[def_id] then
-            has_builder = true
-            HOLO_PLACERS[unit_id] = false
-        end
-    end
-
-    if has_qbuilder and not has_builder then
-        for i=1, #ids do
-            HOLO_PLACERS[ids[i]] = nil
-        end
-    end
-end
-
-local function checkUnits()
+local function checkUnits(update)
     local mode = 0
+    local num_hp = 0
+    local num_builders = 0
 
     local ids = GetSelectedUnits()
     for i=1, #ids do
         local def_id = GetUnitDefID(ids[i])
+
         if HOLO_PLACERS[ids[i]] then
-            mode = 40000
-        elseif BUILDER_DEFS[def_id] then
-            mode = mode + 1
+            num_hp = num_hp + 1
+        end
+
+        if BUILDER_DEFS[def_id] then
+            num_builders = num_builders + 1
         end
     end
 
-    if mode > 0 then
-        if mode >= 40000 then
-            CMD_HOLO_PLACE_DESCRIPTION.params[1] = 1
+    if num_builders > 0 then
+        if update then
+            if num_hp >= num_builders / 2 then
+                for i=1, #ids do
+                    HOLO_PLACERS[ids[i]] = nil
+                end
+                mode = 0
+            else
+                for i=1, #ids do
+                    HOLO_PLACERS[ids[i]] = HOLO_PLACERS[ids[i]] or true
+                end
+            end
         else
-            CMD_HOLO_PLACE_DESCRIPTION.params[1] = 0
+            if num_hp >= num_builders / 2 then
+                CMD_HOLO_PLACE_DESCRIPTION.params[1] = 1
+            else
+                CMD_HOLO_PLACE_DESCRIPTION.params[1] = 0
+            end
         end
 
         return true
@@ -130,7 +126,7 @@ widget.UnitDestroyed = ForgetUnit
 widget.UnitTaken = ForgetUnit
 
 function widget:CommandsChanged()
-    if checkUnits() then
+    if checkUnits(false) then
         local cmds = widgetHandler.customCommands
         cmds[#cmds + 1] = CMD_HOLO_PLACE_DESCRIPTION
     end
@@ -138,63 +134,60 @@ end
 
 function widget:CommandNotify(cmd_id, cmd_params, cmd_options)
     if cmd_id == CMD_HOLO_PLACE then
-        handleHoloPlace()
-        checkUnits()
+        checkUnits(true)
         return true
     end
 end
 
 function widget:GameFrame()
     for unit_id, target_id in pairs(HOLO_PLACERS) do
-        if not target_id then
+        if target_id == "delay_swap" then
+            -- delay swap by a frame
+
+            HOLO_PLACERS[unit_id] = true
+            local _, _, tag = GetUnitCurrentCommand(unit_id)
+            GiveOrderToUnit(unit_id, CMD_REMOVE, tag, 0)
+
+        elseif type(target_id) ~= "number" then
+            -- check if building
+
             local target_id = GetUnitIsBuilding(unit_id)
             if target_id then
-                local being_built, progress = GetUnitIsBeingBuilt(target_id)
+                local being_built = GetUnitIsBeingBuilt(target_id)
                 if being_built then
-                    if progress > 0 then
-                        local nt_ids = ntNearUnit(target_id)
-                        local nt_near = false
-                        for i=1, #nt_ids do
-                            local nt_id = nt_ids[i]
-                            local cmds = GetUnitCommands(nt_id, 2)
-                            if (cmds[2] and cmds[2].id == CMD_FIGHT)
-                                or (cmds[1] and cmds[1].id == CMD_FIGHT)
-                            then
-                                local _, _, tag = GetUnitCurrentCommand(unit_id)
-                                GiveOrderToUnit(unit_id, CMD_REMOVE, tag, 0)
-                                GiveOrderToUnit(nt_id, CMD_REPAIR, target_id, 0)
-                                nt_near = true
-                                break
-                            end
-                        end
-
-                        if not nt_near then
-                            HOLO_PLACERS[unit_id] = target_id
-                        end
-                    else
-                        HOLO_PLACERS[unit_id] = target_id
-                    end
+                    HOLO_PLACERS[unit_id] = target_id
                 end
             end
+
         else
-            local being_built, progress = GetUnitIsBeingBuilt(target_id)
+            -- check for nearby nano to pin holo
+
+            local being_built = GetUnitIsBeingBuilt(target_id)
             if being_built then
                 local nt_ids = ntNearUnit(target_id)
                 for i=1, #nt_ids do
                     local nt_id = nt_ids[i]
                     local cmds = GetUnitCommands(nt_id, 2)
+
                     if (cmds[2] and cmds[2].id == CMD_FIGHT)
                         or (cmds[1] and cmds[1].id == CMD_FIGHT)
                     then
-                        HOLO_PLACERS[unit_id] = false
+                        HOLO_PLACERS[unit_id] = "delay_swap"
+                        GiveOrderToUnit(nt_id, CMD_REPAIR, target_id, 0)
+                        break
+                    elseif cmds[1]
+                        and cmds[1].id == CMD_REPAIR
+                        and cmds[1].params[1] == target_id
+                        and not GetUnitIsBeingBuilt(nt_id)
+                    then
+                        HOLO_PLACERS[unit_id] = true
                         local _, _, tag = GetUnitCurrentCommand(unit_id)
                         GiveOrderToUnit(unit_id, CMD_REMOVE, tag, 0)
-                        GiveOrderToUnit(nt_id, CMD_REPAIR, target_id, 0)
                         break
                     end
                 end
             else
-                HOLO_PLACERS[unit_id] = false
+                HOLO_PLACERS[unit_id] = true
             end
         end
     end
