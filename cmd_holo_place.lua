@@ -144,7 +144,6 @@ function widget:CommandNotify(cmd_id, cmd_params, cmd_options)
     end
 end
 
--- estimate if being assisted by checking build progress
 function widget:GameFrame()
     for unit_id, target_id in pairs(HOLO_PLACERS) do
         if not target_id then
