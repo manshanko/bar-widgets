@@ -118,6 +118,10 @@ local function checkUnits(update)
     end
 end
 
+local function handleHoloPlace()
+    checkUnits(true)
+end
+
 local function ForgetUnit(self, unit_id)
     HOLO_PLACERS[unit_id] = nil
 end
