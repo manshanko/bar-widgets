@@ -63,7 +63,7 @@ end
 
 local function ntNearUnit(target_unit_id)
     local pos = {GetUnitPosition(target_unit_id)}
-    local units_near = GetUnitsInCylinder(pos[1], pos[3], MAX_DISTANCE, -3)
+    local units_near = GetUnitsInCylinder(pos[1], pos[3], MAX_DISTANCE, -2)
     local unit_ids = {}
     for _, id in ipairs(units_near) do
         local dist = NANO_DEFS[GetUnitDefID(id)]
