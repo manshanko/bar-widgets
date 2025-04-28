@@ -51,7 +51,9 @@ local HOLO_PLACERS = {}
 for unit_def_id, unit_def in pairs(UnitDefs) do
     BT_DEFS[unit_def_id] = unit_def.buildTime
     if unit_def.isBuilder and not unit_def.isFactory then
-        BUILDER_DEFS[unit_def_id] = unit_def.buildSpeed
+        if #unit_def.buildOptions > 0 then
+            BUILDER_DEFS[unit_def_id] = unit_def.buildSpeed
+        end
         if not unit_def.canMove then
             NANO_DEFS[unit_def_id] = unit_def.buildDistance
             if unit_def.buildDistance > MAX_DISTANCE then
