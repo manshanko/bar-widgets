@@ -147,7 +147,8 @@ end
 
 function widget:GameFrame()
     for unit_id, builder in pairs(HOLO_PLACERS) do
-        if builder.nt_id then
+        local target_id = GetUnitIsBuilding(unit_id)
+        if builder.nt_id and target_id == builder.building_id then
             local building_id = GetUnitIsBuilding(builder.nt_id)
             local num_cmds = GetUnitCommands(builder.nt_id, 0)
             if building_id == builder.building_id and num_cmds == 1 then
@@ -155,39 +156,29 @@ function widget:GameFrame()
                 GiveOrderToUnit(unit_id, CMD_REMOVE, builder.cmd_tag, 0)
             elseif builder.tick > 30 then
                 builder.nt_id = false
+                builder.building_id = false
             else
                 builder.tick = builder.tick + 1
             end
-        else
-            local target_id = GetUnitIsBuilding(unit_id)
-            if target_id then
-                if not builder.target_id then
-                    -- check if building
+        elseif target_id and target_id ~= builder.building_id then
+            -- find nearby nano to pin holo
 
-                    builder.target_id = target_id
+            local nt_ids = ntNearUnit(target_id)
+            for i=1, #nt_ids do
+                local nt_id = nt_ids[i]
+                local cmds = GetUnitCommands(nt_id, 2)
+
+                if (cmds[2] and cmds[2].id == CMD_FIGHT)
+                    or (cmds[1] and cmds[1].id == CMD_FIGHT)
+                then
+                    local _, _, tag = GetUnitCurrentCommand(unit_id)
+                    builder.nt_id = nt_id
+                    builder.tick = 0
+                    builder.building_id = target_id
+                    builder.cmd_tag = tag
+                    GiveOrderToUnit(nt_id, CMD_REPAIR, target_id, 0)
+                    break
                 end
-
-                -- find nearby nano to pin holo
-
-                local nt_ids = ntNearUnit(target_id)
-                for i=1, #nt_ids do
-                    local nt_id = nt_ids[i]
-                    local cmds = GetUnitCommands(nt_id, 2)
-
-                    if (cmds[2] and cmds[2].id == CMD_FIGHT)
-                        or (cmds[1] and cmds[1].id == CMD_FIGHT)
-                    then
-                        local _, _, tag = GetUnitCurrentCommand(unit_id)
-                        builder.nt_id = nt_id
-                        builder.tick = 0
-                        builder.building_id = target_id
-                        builder.cmd_tag = tag
-                        GiveOrderToUnit(nt_id, CMD_REPAIR, target_id, 0)
-                        break
-                    end
-                end
-            else
-                builder.target_id = false
             end
         end
     end
