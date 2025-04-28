@@ -1,6 +1,8 @@
 Collection of widgets for [BAR (Beyond All Reason)](https://www.beyondallreason.info/).
 
-Widgets are placed in `LuaUI/Widgets`. See **Open Install Directory** in the launcher for BAR's install directory.
+Custom widgets are installed to `LuaUI/Widgets`.
+See **Open Install Directory** in the launcher for BAR's install directory.
+Once installed widgets are enabled ingame at *Settings* -> *Custom* -> *Widgets*.
 
 See [resopmok's keybind guide](https://github.com/resopmok/BAR_uikeys_collections/blob/main/keybind-guide.md) for changing keybinds.
 
