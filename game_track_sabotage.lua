@@ -91,8 +91,8 @@ function widget:UnitDestroyed(unit_id, unit_def_id, unit_team, attacker_id, atta
             attacker_name = attacker_name .. "]"
         end
 
-        local unit_name = UnitDefs[unit_def_id].name
-        local attacker_unit_name = UnitDefs[attacker_def_id].name
+        local unit_name = UnitDefs[unit_def_id].translatedHumanName
+        local attacker_unit_name = UnitDefs[attacker_def_id].translatedHumanName
 
         local text = format("%s killed by %s from %s",
             unit_name,
