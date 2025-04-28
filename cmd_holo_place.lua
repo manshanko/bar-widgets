@@ -105,7 +105,7 @@ local function checkUnits(update)
                 mode = 0
             else
                 for i=1, #ids do
-                    HOLO_PLACERS[ids[i]] = HOLO_PLACERS[ids[i]] or true
+                    HOLO_PLACERS[ids[i]] = HOLO_PLACERS[ids[i]] or {}
                 end
             end
         else
@@ -146,30 +146,29 @@ function widget:CommandNotify(cmd_id, cmd_params, cmd_options)
 end
 
 function widget:GameFrame()
-    for unit_id, target_id in pairs(HOLO_PLACERS) do
-        if target_id == "delay_swap" then
-            -- delay swap by a frame
-
-            HOLO_PLACERS[unit_id] = true
-            local _, _, tag = GetUnitCurrentCommand(unit_id)
-            GiveOrderToUnit(unit_id, CMD_REMOVE, tag, 0)
-
-        elseif type(target_id) ~= "number" then
-            -- check if building
-
+    for unit_id, builder in pairs(HOLO_PLACERS) do
+        if builder.nt_id then
+            local building_id = GetUnitIsBuilding(builder.nt_id)
+            local num_cmds = GetUnitCommands(builder.nt_id, 0)
+            if building_id == builder.building_id and num_cmds == 1 then
+                builder.nt_id = false
+                GiveOrderToUnit(unit_id, CMD_REMOVE, builder.cmd_tag, 0)
+            elseif builder.tick > 30 then
+                builder.nt_id = false
+            else
+                builder.tick = builder.tick + 1
+            end
+        else
             local target_id = GetUnitIsBuilding(unit_id)
             if target_id then
-                local being_built = GetUnitIsBeingBuilt(target_id)
-                if being_built then
-                    HOLO_PLACERS[unit_id] = target_id
+                if not builder.target_id then
+                    -- check if building
+
+                    builder.target_id = target_id
                 end
-            end
 
-        else
-            -- check for nearby nano to pin holo
+                -- find nearby nano to pin holo
 
-            local being_built = GetUnitIsBeingBuilt(target_id)
-            if being_built then
                 local nt_ids = ntNearUnit(target_id)
                 for i=1, #nt_ids do
                     local nt_id = nt_ids[i]
@@ -178,22 +177,17 @@ function widget:GameFrame()
                     if (cmds[2] and cmds[2].id == CMD_FIGHT)
                         or (cmds[1] and cmds[1].id == CMD_FIGHT)
                     then
-                        HOLO_PLACERS[unit_id] = "delay_swap"
-                        GiveOrderToUnit(nt_id, CMD_REPAIR, target_id, 0)
-                        break
-                    elseif cmds[1]
-                        and cmds[1].id == CMD_REPAIR
-                        and cmds[1].params[1] == target_id
-                        and not GetUnitIsBeingBuilt(nt_id)
-                    then
-                        HOLO_PLACERS[unit_id] = true
                         local _, _, tag = GetUnitCurrentCommand(unit_id)
-                        GiveOrderToUnit(unit_id, CMD_REMOVE, tag, 0)
+                        builder.nt_id = nt_id
+                        builder.tick = 0
+                        builder.building_id = target_id
+                        builder.cmd_tag = tag
+                        GiveOrderToUnit(nt_id, CMD_REPAIR, target_id, 0)
                         break
                     end
                 end
             else
-                HOLO_PLACERS[unit_id] = true
+                builder.target_id = false
             end
         end
     end
