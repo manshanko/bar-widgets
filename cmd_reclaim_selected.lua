@@ -79,41 +79,55 @@ local function signalReclaim(target_unit_id)
     GiveOrderToUnitArray(unit_ids, CMD_INSERT, CMD_CACHE, ALT)
 end
 
+local TASKS = nil
 local function signalReclaimShuffle(target_unit_ids)
-    local tasks = {}
-    for i=1, #target_unit_ids do
-        local unit_ids = ntNearUnit(target_unit_ids[i])
-        table.shuffle(unit_ids)
-        tasks[i] = {
-            num_units = #unit_ids,
-            unit_ids = unit_ids,
-            target_unit_id = target_unit_ids[i],
-        }
-    end
-
-    local num_tasks = #tasks
-    local split = num_tasks
-    while num_tasks > 0 do
-        for i, group in pairs(tasks) do
-            local grp_unit_ids = group.unit_ids
-            local num_units = group.num_units
-            local take = math.ceil(math.min(math.max(4, num_units / split), num_units))
-            group.num_units = group.num_units - take
-
-            local unit_ids = {}
-            for i=1, take do
-                unit_ids[i] = grp_unit_ids[num_units - i + 1]
-            end
-
-            if group.num_units == 0 then
-                tasks[i] = nil
-                num_tasks = num_tasks - 1
-            end
-
-            CMD_CACHE[4] = group.target_unit_id
-            GiveOrderToUnitArray(unit_ids, CMD_INSERT, CMD_CACHE, ALT)
+    TASKS = coroutine.wrap(function()
+        local tasks = {}
+        for i=1, #target_unit_ids do
+            local unit_ids = ntNearUnit(target_unit_ids[i])
+            table.shuffle(unit_ids)
+            tasks[i] = {
+                num_units = #unit_ids,
+                unit_ids = unit_ids,
+                target_unit_id = target_unit_ids[i],
+            }
         end
-    end
+
+        local work = 0
+        local num_tasks = #tasks
+        local split = num_tasks
+        while num_tasks > 0 do
+            for i, group in pairs(tasks) do
+                local grp_unit_ids = group.unit_ids
+                local num_units = group.num_units
+                local take = math.ceil(math.min(math.max(4, num_units / split), num_units))
+                group.num_units = group.num_units - take
+
+                local unit_ids = {}
+                for i=1, take do
+                    unit_ids[i] = grp_unit_ids[num_units - i + 1]
+                end
+
+                if group.num_units == 0 then
+                    tasks[i] = nil
+                    num_tasks = num_tasks - 1
+                end
+
+                work = work + take
+                if work > 200 then
+                    work = 0
+                    coroutine.yield()
+                end
+
+                CMD_CACHE[4] = group.target_unit_id
+                GiveOrderToUnitArray(unit_ids, CMD_INSERT, CMD_CACHE, ALT)
+            end
+        end
+
+        TASKS = nil
+    end)
+
+    TASKS()
 end
 
 local function handleReclaimSelected()
@@ -143,6 +157,12 @@ function widget:CommandNotify(cmd_id, cmd_params, cmd_options)
         else
             handleReclaimSelected()
         end
+    end
+end
+
+function widget:GameFrame()
+    if TASKS then
+        TASKS()
     end
 end
 
