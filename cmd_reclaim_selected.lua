@@ -113,14 +113,14 @@ local function signalReclaimShuffle(target_unit_ids)
                     num_tasks = num_tasks - 1
                 end
 
+                CMD_CACHE[4] = group.target_unit_id
+                GiveOrderToUnitArray(unit_ids, CMD_INSERT, CMD_CACHE, ALT)
+
                 work = work + take
-                if work > 200 then
+                if work > 50 then
                     work = 0
                     coroutine.yield()
                 end
-
-                CMD_CACHE[4] = group.target_unit_id
-                GiveOrderToUnitArray(unit_ids, CMD_INSERT, CMD_CACHE, ALT)
             end
         end
 
