@@ -81,6 +81,7 @@ end
 
 local TASKS = nil
 local function signalReclaimShuffle(target_unit_ids)
+    local executed = 0
     TASKS = coroutine.wrap(function()
         local tasks = {}
         for i=1, #target_unit_ids do
@@ -117,9 +118,15 @@ local function signalReclaimShuffle(target_unit_ids)
                 GiveOrderToUnitArray(unit_ids, CMD_INSERT, CMD_CACHE, ALT)
 
                 work = work + take
-                if work > 50 then
+                if work > 30 then
+                    executed = executed + work
                     work = 0
-                    coroutine.yield()
+                    if executed >= 1000 then
+                        num_tasks = 0
+                        break
+                    else
+                        coroutine.yield()
+                    end
                 end
             end
         end
@@ -160,8 +167,8 @@ function widget:CommandNotify(cmd_id, cmd_params, cmd_options)
     end
 end
 
-function widget:GameFrame()
-    if TASKS then
+function widget:GameFrame(n)
+    if TASKS and n % 3 == 0 then
         TASKS()
     end
 end
