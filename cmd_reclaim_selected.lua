@@ -80,21 +80,45 @@ local function signalReclaim(target_unit_id)
 end
 
 local TASKS = nil
-local function signalReclaimShuffle(target_unit_ids)
-    local executed = 0
+--=============================================================================
+-- OPTIMIZED SHUFFLE HANDLER
+-- This version preserves the original's correct logic while making the
+-- initial setup phase asynchronous to prevent lag on large selections.
+--=============================================================================
+local function signalReclaimShuffleOptimized(target_unit_ids)
+    if TASKS then return end -- Don't start a new task if one is already running
+
     TASKS = coroutine.wrap(function()
+        -- 1. ASYNCHRONOUS SETUP PHASE
         local tasks = {}
         for i=1, #target_unit_ids do
             local unit_ids = ntNearUnit(target_unit_ids[i])
             table.shuffle(unit_ids)
-            tasks[i] = {
-                num_units = #unit_ids,
-                unit_ids = unit_ids,
-                target_unit_id = target_unit_ids[i],
-            }
+
+            -- Only create a task if reclaimers were actually found for this target
+            if #unit_ids > 0 then
+                tasks[#tasks + 1] = {
+                    num_units = #unit_ids,
+                    unit_ids = unit_ids,
+                    target_unit_id = target_unit_ids[i],
+                }
+            end
+
+            --[[
+            OPTIMIZATION: This is the critical change.
+            By yielding periodically during the setup loop, we prevent the game
+            from freezing when a very large number of units are selected. The work
+            of finding and shuffling reclaimers is now spread across multiple frames.
+            --]]
+            if i % 15 == 0 then
+                coroutine.yield()
+            end
         end
 
+        -- 2. EXECUTION PHASE (Logically Unchanged)
+        -- This part of the original code was already well-designed and asynchronous.
         local work = 0
+        local executed = 0
         local num_tasks = #tasks
         local split = num_tasks
         while num_tasks > 0 do
@@ -104,18 +128,18 @@ local function signalReclaimShuffle(target_unit_ids)
                 local take = math.ceil(math.min(math.max(4, num_units / split), num_units))
                 group.num_units = group.num_units - take
 
-                local unit_ids = {}
-                for i=1, take do
-                    unit_ids[i] = grp_unit_ids[num_units - i + 1]
+                local unit_ids_batch = {}
+                for j=1, take do
+                    unit_ids_batch[j] = grp_unit_ids[num_units - j + 1]
                 end
 
-                if group.num_units == 0 then
+                if group.num_units <= 0 then
                     tasks[i] = nil
                     num_tasks = num_tasks - 1
                 end
 
                 CMD_CACHE[4] = group.target_unit_id
-                GiveOrderToUnitArray(unit_ids, CMD_INSERT, CMD_CACHE, ALT)
+                GiveOrderToUnitArray(unit_ids_batch, CMD_INSERT, CMD_CACHE, ALT)
 
                 work = work + take
                 if work > 30 then
@@ -145,8 +169,8 @@ local function handleReclaimSelected()
     end
 end
 
-local function handleReclaimSelectedShuffle()
-    signalReclaimShuffle(GetSelectedUnits())
+local function handleReclaimSelectedShuffleOptimized()
+    signalReclaimShuffleOptimized(GetSelectedUnits())
 end
 
 function widget:CommandsChanged()
@@ -160,7 +184,8 @@ end
 function widget:CommandNotify(cmd_id, cmd_params, cmd_options)
     if cmd_id == CMD_RECLAIM_SELECTED then
         if CONFIG.shuffle then
-            handleReclaimSelectedShuffle()
+            -- Use the fully optimized handler
+            handleReclaimSelectedShuffleOptimized()
         else
             handleReclaimSelected()
         end
@@ -174,8 +199,9 @@ function widget:GameFrame(n)
 end
 
 function widget:Initialize()
+    -- NOTE: Action handlers are kept for potential hotkey binding, etc.
     widgetHandler.actionHandler:AddAction(self, "reclaim_selected", handleReclaimSelected, nil, "p")
-    widgetHandler.actionHandler:AddAction(self, "reclaim_selected_shuffle", handleReclaimSelectedShuffle, nil, "p")
+    widgetHandler.actionHandler:AddAction(self, "reclaim_selected_shuffle", handleReclaimSelectedShuffleOptimized, nil, "p")
 end
 
 function widget:Shutdown()
