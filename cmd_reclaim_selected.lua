@@ -15,6 +15,8 @@ local CONFIG = {
     shuffle = true,
 }
 
+if Spring.GetSpectatingState() then return end
+
 local echo = Spring.Echo
 local i18n = Spring.I18N
 local GetSelectedUnits = Spring.GetSelectedUnits
