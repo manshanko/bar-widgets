@@ -20,15 +20,17 @@ if Spring.GetSpectatingState() then return end
 local echo = Spring.Echo
 local i18n = Spring.I18N
 local GetSelectedUnits = Spring.GetSelectedUnits
+local GetUnitCommandCount = Spring.GetUnitCommandCount
 local GetUnitDefID = Spring.GetUnitDefID
 local GetUnitPosition = Spring.GetUnitPosition
 local GetUnitSeparation = Spring.GetUnitSeparation
 local GetUnitsInCylinder = Spring.GetUnitsInCylinder
-local GiveOrderToUnit = Spring.GiveOrderToUnit
 local GiveOrderToUnitArray = Spring.GiveOrderToUnitArray
+local GiveOrderArrayToUnit = Spring.GiveOrderArrayToUnit
 local UnitDefs = UnitDefs
 local CMD_RECLAIM = CMD.RECLAIM
 local CMD_INSERT = CMD.INSERT
+local CMD_OPT_ALT = CMD.OPT_ALT
 local CMD_OPT_SHIFT = CMD.OPT_SHIFT
 
 local CMD_RECLAIM_SELECTED = 28329
@@ -55,7 +57,6 @@ for unit_def_id, unit_def in pairs(UnitDefs) do
     end
 end
 
-local ALT = {"alt"}
 local CMD_CACHE = { 0, CMD_RECLAIM, CMD_OPT_SHIFT, 0 }
 
 local function ntNearUnit(target_unit_id)
@@ -78,57 +79,51 @@ local function signalReclaim(target_unit_id)
     local unit_ids = ntNearUnit(target_unit_id)
 
     CMD_CACHE[4] = target_unit_id
-    GiveOrderToUnitArray(unit_ids, CMD_INSERT, CMD_CACHE, ALT)
+    GiveOrderToUnitArray(unit_ids, CMD_INSERT, CMD_CACHE, CMD_OPT_ALT)
 end
 
 local TASKS = nil
 local function signalReclaimShuffle(target_unit_ids)
-    local executed = 0
     TASKS = coroutine.wrap(function()
-        local tasks = {}
+        local nt_seen = {}
+        local nt_queue = {}
         for i=1, #target_unit_ids do
-            local unit_ids = ntNearUnit(target_unit_ids[i])
-            table.shuffle(unit_ids)
-            tasks[i] = {
-                num_units = #unit_ids,
-                unit_ids = unit_ids,
-                target_unit_id = target_unit_ids[i],
-            }
+            local unit_id = target_unit_ids[i]
+            local nt_ids = ntNearUnit(unit_id)
+            for i=1, #nt_ids do
+                local nt_id = nt_ids[i]
+                if not (nt_seen[nt_id] and nt_seen[nt_id][unit_id]) then
+                    nt_seen[nt_id] = nt_seen[nt_id] or {}
+                    nt_seen[nt_id][unit_id] = true
+
+                    nt_queue[nt_id] = nt_queue[nt_id] or {}
+                    nt_queue[nt_id][#nt_queue[nt_id] + 1] = {
+                        CMD_RECLAIM,
+                        unit_id,
+                        CMD_OPT_SHIFT,
+                    }
+                end
+            end
         end
 
-        local work = 0
-        local num_tasks = #tasks
-        local split = num_tasks
-        while num_tasks > 0 do
-            for i, group in pairs(tasks) do
-                local grp_unit_ids = group.unit_ids
-                local num_units = group.num_units
-                local take = math.ceil(math.min(math.max(4, num_units / split), num_units))
-                group.num_units = group.num_units - take
+        local executed = 0
+        for nt_id, cmds in pairs(nt_queue) do
+            local num_cmds = GetUnitCommandCount(nt_id)
+            if num_cmds then
+                table.shuffle(cmds)
 
-                local unit_ids = {}
-                for i=1, take do
-                    unit_ids[i] = grp_unit_ids[num_units - i + 1]
+                -- Try to append reclaim orders if user does multiple reclaim selected.
+                -- This check is arbitrary but works in the common case.
+                if num_cmds <= 5 then
+                    cmds[1][3] = nil
                 end
+                GiveOrderArrayToUnit(nt_id, cmds)
+                nt_queue[nt_id] = nil
 
-                if group.num_units == 0 then
-                    tasks[i] = nil
-                    num_tasks = num_tasks - 1
-                end
-
-                CMD_CACHE[4] = group.target_unit_id
-                GiveOrderToUnitArray(unit_ids, CMD_INSERT, CMD_CACHE, ALT)
-
-                work = work + take
-                if work > 30 then
-                    executed = executed + work
-                    work = 0
-                    if executed >= 1000 then
-                        num_tasks = 0
-                        break
-                    else
-                        coroutine.yield()
-                    end
+                executed = executed + 5 + #cmds
+                if executed > 200 then
+                    executed = 0
+                    coroutine.yield()
                 end
             end
         end
