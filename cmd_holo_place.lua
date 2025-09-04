@@ -15,6 +15,7 @@ if Spring.GetSpectatingState() then return end
 local echo = Spring.Echo
 local i18n = Spring.I18N
 local GetSelectedUnits = Spring.GetSelectedUnits
+local GetUnitBuildeeRadius = Spring.GetUnitBuildeeRadius
 local GetUnitCommandCount = Spring.GetUnitCommandCount
 local GetUnitDefID = Spring.GetUnitDefID
 local GetUnitIsBeingBuilt = Spring.GetUnitIsBeingBuilt
@@ -66,14 +67,15 @@ for unit_def_id, unit_def in pairs(UnitDefs) do
 end
 
 local function ntNearUnit(target_unit_id)
+    local buildee_radius = GetUnitBuildeeRadius(target_unit_id) - 1
     local x, y, z = GetUnitPosition(target_unit_id)
-    local units_near = GetUnitsInCylinder(x, z, MAX_DISTANCE, -2)
     local unit_ids = {}
     for _, id in ipairs(units_near) do
+    local units_near = GetUnitsInCylinder(x, z, MAX_DISTANCE + buildee_radius, -2)
         local dist = NANO_DEFS[GetUnitDefID(id)]
         if dist ~= nil and target_unit_id ~= id then
-            if dist > GetUnitSeparation(target_unit_id, id, true) then
                 unit_ids[#unit_ids + 1] = id
+            if dist > GetUnitSeparation(target_unit_id, id, true, true) then
             end
         end
     end
