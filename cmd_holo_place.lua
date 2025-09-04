@@ -66,20 +66,21 @@ for unit_def_id, unit_def in pairs(UnitDefs) do
     end
 end
 
-local function ntNearUnit(target_unit_id)
+local function ntNearUnit(target_unit_id, callback)
     local buildee_radius = GetUnitBuildeeRadius(target_unit_id) - 1
     local x, y, z = GetUnitPosition(target_unit_id)
-    local unit_ids = {}
-    for _, id in ipairs(units_near) do
     local units_near = GetUnitsInCylinder(x, z, MAX_DISTANCE + buildee_radius, -2)
+    for i=1, #units_near do
+        local id = units_near[i]
         local dist = NANO_DEFS[GetUnitDefID(id)]
         if dist ~= nil and target_unit_id ~= id then
-                unit_ids[#unit_ids + 1] = id
             if dist > GetUnitSeparation(target_unit_id, id, true, true) then
+                if callback(id) then
+                    return
+                end
             end
         end
     end
-    return unit_ids
 end
 
 local function checkUnits(update)
@@ -167,9 +168,7 @@ function widget:GameFrame()
         elseif target_id and target_id ~= builder.building_id then
             -- find nearby nano to pin holo
 
-            local nt_ids = ntNearUnit(target_id)
-            for i=1, #nt_ids do
-                local nt_id = nt_ids[i]
+            ntNearUnit(target_id, function(nt_id)
                 local cmds = GetUnitCommands(nt_id, 2)
 
                 if (cmds[2] and cmds[2].id == CMD_FIGHT)
@@ -181,9 +180,9 @@ function widget:GameFrame()
                     builder.building_id = target_id
                     builder.cmd_tag = tag
                     GiveOrderToUnit(nt_id, CMD_REPAIR, target_id, 0)
-                    break
+                    return true
                 end
-            end
+            end)
         end
     end
 end
