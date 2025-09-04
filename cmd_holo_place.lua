@@ -84,41 +84,42 @@ local function ntNearUnit(target_unit_id, callback)
 end
 
 local function checkUnits(update)
-    local mode = 0
-    local num_hp = 0
-    local num_builders = 0
+    local builders = {}
+    local has_holo_place = false
 
     local ids = GetSelectedUnits()
     for i=1, #ids do
-        local def_id = GetUnitDefID(ids[i])
-
-        if HOLO_PLACERS[ids[i]] then
-            num_hp = num_hp + 1
-        end
+        local unit_id = ids[i]
+        local def_id = GetUnitDefID(unit_id)
 
         if BUILDER_DEFS[def_id] then
-            num_builders = num_builders + 1
+            if HOLO_PLACERS[ids[i]] then
+                has_holo_place = true
+            end
+
+            builders[#builders + 1] = unit_id
         end
     end
 
-    if num_builders > 0 then
+    if #builders > 0 then
         if update then
-            if num_hp >= num_builders / 2 then
-                for i=1, #ids do
-                    HOLO_PLACERS[ids[i]] = nil
+            if has_holo_place then
+                for i=1, #builders do
+                    HOLO_PLACERS[builders[i]] = nil
                 end
-                mode = 0
+                has_holo_place = false
             else
-                for i=1, #ids do
-                    HOLO_PLACERS[ids[i]] = HOLO_PLACERS[ids[i]] or {}
+                for i=1, #builders do
+                    HOLO_PLACERS[builders[i]] = HOLO_PLACERS[builders[i]] or {}
                 end
+                has_holo_place = true
             end
+        end
+
+        if has_holo_place then
+            CMD_HOLO_PLACE_DESCRIPTION.params[1] = 1
         else
-            if num_hp >= num_builders / 2 then
-                CMD_HOLO_PLACE_DESCRIPTION.params[1] = 1
-            else
-                CMD_HOLO_PLACE_DESCRIPTION.params[1] = 0
-            end
+            CMD_HOLO_PLACE_DESCRIPTION.params[1] = 0
         end
 
         return true
