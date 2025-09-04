@@ -130,12 +130,9 @@ local function handleHoloPlace()
     checkUnits(true)
 end
 
-local function ForgetUnit(self, unit_id)
+function widget:MetaUnitRemoved(unit_id)
     HOLO_PLACERS[unit_id] = nil
 end
-
-widget.UnitDestroyed = ForgetUnit
-widget.UnitTaken = ForgetUnit
 
 function widget:CommandsChanged()
     if checkUnits(false) then
