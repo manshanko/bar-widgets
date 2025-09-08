@@ -38,6 +38,7 @@ for unit_def_id, unit_def in pairs(UnitDefs) do
         or unit_def.extractsMetal > 0
         or (unit_def.customParams and unit_def.customParams.energymultiplier)
         or (unit_def.customParams and unit_def.customParams.energyconv_efficiency))
+            and unit_def.isBuilding
             and not unit_def.isBuilder
     then
         ECO_DEFS[unit_def_id] = unit_def
