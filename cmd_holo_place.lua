@@ -4,8 +4,8 @@ function widget:GetInfo()
         desc    = "Start next building while nearby nano turrets are free",
         author  = "manshanko",
         date    = "2025-04-14",
+        home    = "https://github.com/manshanko/bar-widgets",
         layer   = 2,
-        enabled = false,
         handler = true,
     }
 end

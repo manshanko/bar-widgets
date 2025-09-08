@@ -4,8 +4,8 @@ function widget:GetInfo()
         desc    = "Track when players destroy eco buildings in PvE",
         author  = "manshanko",
         date    = "2025-04-04",
+        home    = "https://github.com/manshanko/bar-widgets",
         layer   = 2,
-        enabled = false,
     }
 end
 

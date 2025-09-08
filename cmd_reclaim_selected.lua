@@ -4,8 +4,8 @@ function widget:GetInfo()
         desc    = "Reclaim selected units with nearby nano turrets",
         author  = "manshanko",
         date    = "2025-04-01",
+        home    = "https://github.com/manshanko/bar-widgets",
         layer   = 2,
-        enabled = false,
         handler = true,
     }
 end

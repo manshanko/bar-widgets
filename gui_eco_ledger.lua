@@ -4,8 +4,8 @@ function widget:GetInfo()
         desc    = "Show resources going into economy buildings",
         author  = "manshanko",
         date    = "2025-04-03",
+        home    = "https://github.com/manshanko/bar-widgets",
         layer   = 2,
-        enabled = false,
     }
 end
 
