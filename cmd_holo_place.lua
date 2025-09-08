@@ -1,7 +1,7 @@
 function widget:GetInfo()
     return {
         name    = "Holo Place",
-        desc    = "Start next holo if assisted and force guarding nano turrets to assist",
+        desc    = "Start next building while nearby nano turrets are free",
         author  = "manshanko",
         date    = "2025-04-14",
         layer   = 2,
@@ -40,9 +40,9 @@ local CMD_HOLO_PLACE_DESCRIPTION = {
     params = { 0, "holo_place_off", "holo_place_on" }
 }
 
-i18n.set("en.ui.orderMenu." .. CMD_HOLO_PLACE_DESCRIPTION.params[2], "Holo Place off")
-i18n.set("en.ui.orderMenu." .. CMD_HOLO_PLACE_DESCRIPTION.params[3], "Holo Place on")
-i18n.set("en.ui.orderMenu." .. CMD_HOLO_PLACE_DESCRIPTION.action .. "_tooltip", "Start next building if assisted")
+i18n.set("en.ui.orderMenu." .. CMD_HOLO_PLACE_DESCRIPTION.params[2], "Holo Place")
+i18n.set("en.ui.orderMenu." .. CMD_HOLO_PLACE_DESCRIPTION.params[3], "Holo Place")
+i18n.set("en.ui.orderMenu." .. CMD_HOLO_PLACE_DESCRIPTION.action .. "_tooltip", "Start next building while nearby nano turrets are free")
 
 local BUILDER_DEFS = {}
 local NANO_DEFS = {}
