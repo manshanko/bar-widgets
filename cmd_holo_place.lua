@@ -72,11 +72,13 @@ local function ntNearUnit(target_unit_id, callback)
     local units_near = GetUnitsInCylinder(x, z, MAX_DISTANCE + buildee_radius, -2)
     for i=1, #units_near do
         local id = units_near[i]
-        local dist = NANO_DEFS[GetUnitDefID(id)]
-        if dist ~= nil and target_unit_id ~= id then
-            if dist > GetUnitSeparation(target_unit_id, id, true, true) then
-                if callback(id) then
-                    return
+        if not GetUnitIsBeingBuilt(id) then
+            local dist = NANO_DEFS[GetUnitDefID(id)]
+            if dist ~= nil and target_unit_id ~= id then
+                if dist > GetUnitSeparation(target_unit_id, id, true, true) then
+                    if callback(id) then
+                        return
+                    end
                 end
             end
         end
