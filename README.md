@@ -10,7 +10,6 @@ Widgets:
 * [Reclaim Selected](#reclaim-selected) ([`cmd_reclaim_selected.lua`](https://raw.githubusercontent.com/manshanko/bar-widgets/main/cmd_reclaim_selected.lua))
 * [Holo Place](#holo-place) ([`cmd_holo_place.lua`](https://raw.githubusercontent.com/manshanko/bar-widgets/main/cmd_holo_place.lua))
 * [Track Sabotage](#track-sabotage) ([`game_track_sabotage.lua`](https://raw.githubusercontent.com/manshanko/bar-widgets/main/game_track_sabotage.lua))
-* [Eco Ledger](#eco-ledger) ([`gui_eco_ledger.lua`](https://raw.githubusercontent.com/manshanko/bar-widgets/main/gui_eco_ledger.lua))
 
 
 
@@ -49,15 +48,9 @@ Logs to `userdata/<GAME_DATETIME>.json`.
 
 
 
-## Eco Ledger
-
-Adds a window in the top bar that shows metal/energy rate going into economy buildings.
-
-
-
 &nbsp;
 
 ## Distribution
 
-These widgets are not open source and redistribution is not permitted.
+Redistribution is not permitted.
 Link to [github.com/manshanko/bar-widgets](https://github.com/manshanko/bar-widgets) for sharing these widgets.
